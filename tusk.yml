@@ -1,0 +1,42 @@
+tasks:
+  app:
+    usage: access app container and execute commands
+    args:
+      command:
+        usage: the command that app will run
+    run: docker-compose exec app ${command}
+
+  app-logs:
+    usage: access app container logs
+    run: docker-compose logs app
+
+  start:
+    usage: start project containers
+    run: docker-compose start
+
+  stop:
+    usage: stop project containers
+    run: docker-compose stop
+
+  restart:
+    usage: restart project containers
+    run: docker-compose restart
+
+  up:
+    usage: create project containers and start then
+    run: docker-compose up -d
+
+  down:
+    usage: stop and delete project containers
+    options:
+      v:
+        usage: remove docker volumes
+        type: bool
+    run:
+      - when:
+          equal: {v: true}
+        command: docker-compose down -v
+      - when:
+          equal: {v: false}
+        command: docker-compose down
+

@@ -1,0 +1,20 @@
+version: '3'
+services:
+  #PHP Container
+  app:
+    image: devilbox/php-fpm:8.0-mods
+    container_name: estracta-sintegra-app
+    tty: true
+    user: "devilbox:devilbox"
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - ./.docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - app-network
+
+#Docker Networks
+networks:
+  app-network:
+    driver: bridge
+
