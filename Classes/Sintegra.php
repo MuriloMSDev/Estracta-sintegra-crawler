@@ -3,21 +3,29 @@
 namespace Classes;
 
 /**
+ * Class Sintegra
  *
+ * @author Murilo M. Schroeder <muriloms.developer@gmail.com>
  */
 class Sintegra
 {
     /**
+     * Cookies file location
+     *
      * @var string
      */
     protected static $cookieFile = __DIR__."/../cookiejar";
 
     /**
+     * Sintegra base url
+     *
      * @var string
      */
     protected static $url = "www.sintegra.fazenda.pr.gov.br";
 
     /**
+     * Method for consulting of CNPJ
+     *
      * @return void
      */
     public static function consultCNPJ()
@@ -53,13 +61,15 @@ class Sintegra
     }
 
     /**
+     * Method for consulting of others IE
+     *
      * @param $html
      * @param $data
      * @return array|mixed
      */
     private static function otherIE($html, &$data = [])
     {
-        $dom = (@\DOMDocument::loadHTML($html));
+        $dom = @\DOMDocument::loadHTML($html);
         if(!($formInfo = $dom->getElementById("Sintegra1CampoAnterior")) || is_null($dom->getElementById("consultar"))) {
             return $data;
         }
@@ -83,17 +93,21 @@ class Sintegra
     }
 
     /**
+     * Method for generating of Captcha
+     *
      * @return array
      */
     private static function generateCaptcha()
     {
         self::retrieveInfo(self::$url);
-        $response = self::retrieveInfo(self::$url."/sintegra/captcha?".self::random(2));
+        $response = self::retrieveInfo(self::$url."/sintegra/captcha");
 
         self::saveCaptcha($response);
     }
 
     /**
+     * Method for saving of Captcha on disk
+     *
      * @param $img
      * @param $name
      * @return void
@@ -110,15 +124,8 @@ class Sintegra
     }
 
     /**
-     * @param $multiplier
-     * @return float
-     */
-    private static function random($multiplier = 1)
-    {
-        return ((float)rand() / (float)getrandmax()) * $multiplier;
-    }
-
-    /**
+     * Method for clearing of Cookies
+     *
      * @return void
      */
     private static function clearCookies()
@@ -129,6 +136,8 @@ class Sintegra
     }
 
     /**
+     * Method for retrieving of information from Sintegra website
+     *
      * @param $url
      * @param $options
      * @return bool|string
@@ -136,7 +145,7 @@ class Sintegra
     private static function retrieveInfo($url, $options = [])
     {
         $curl = curl_init($url);
-        $defaultOptions = array(
+        $defaultOptions = [
             CURLOPT_HTTPHEADER => [
                 "Pragma: no-cache",
                 "Origin: ".self::$url,
@@ -151,7 +160,7 @@ class Sintegra
             CURLOPT_FOLLOWLOCATION => 1,
             CURLOPT_COOKIEFILE => self::$cookieFile,
             CURLOPT_COOKIEJAR => self::$cookieFile
-        );
+        ];
 
         $defaultOptions = array_replace($defaultOptions, $options);
         curl_setopt_array($curl, $defaultOptions);
@@ -162,6 +171,8 @@ class Sintegra
     }
 
     /**
+     * Method for preparation of HTML data
+     *
      * @param $html
      * @return array
      */
@@ -170,12 +181,13 @@ class Sintegra
         $data = [];
         $dom = (@\DOMDocument::loadHTML($html));
         $finder = new \DOMXPath($dom);
-        $tds = $finder->query("//*[contains(concat(' ', normalize-space(@class), ' '), ' form_label ')]");
+        $tds = $finder->query("//*[contains(concat(' ', normalize-space(@class), ' '), ' form_label ')]|//*[contains(concat(' ', normalize-space(@class), ' '), ' erro_label ')]");
 
         foreach ($tds as $td) {
             $name = trim(str_replace(":", "", $td->nodeValue));
-            if($name != "SPED (EFD, NF-e, CT-e)")
-            $data[$name] = trim($td->nextSibling->nextSibling->nodeValue);
+            if(!in_array($name, ["SPED (EFD, NF-e, CT-e)", "Recomendação"])) {
+                $data[$name] = trim($td->nextSibling->nextSibling->nodeValue);
+            }
         }
 
         return $data;
