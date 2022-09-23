@@ -1,4 +1,22 @@
 tasks:
+  composer:
+    usage: download and install libraries
+    args:
+      command:
+        usage: the command that composer will run
+    options:
+      ignore:
+        usage: use ignore-platform-reqs
+        short: g
+        type: bool
+    run:
+      - when:
+          equal: { ignore: true }
+        command: mkdir -p $HOME/.cache/composer/files $HOME/.cache/composer/repo && docker run --rm -it -u $(id -u):$(id -g) -v $HOME/.cache/composer/:/tmp/cache/ -v $PWD:/app composer ${command} --ignore-platform-reqs
+      - when:
+          equal: { ignore: false }
+        command: mkdir -p $HOME/.cache/composer/files $HOME/.cache/composer/repo && docker run --rm -it -u $(id -u):$(id -g) -v $HOME/.cache/composer/:/tmp/cache/ -v $PWD:/app composer ${command}
+
   app:
     usage: access app container and execute commands
     args:
@@ -40,3 +58,21 @@ tasks:
           equal: {v: false}
         command: docker-compose down
 
+  setup:
+    usage: setup the project container
+    run:
+      - task: up
+      - task:
+          name: composer
+          args:
+            - install
+          options:
+            ignore: true
+
+  crawler:
+    usage: start crawler
+    run:
+      - task:
+          name: app
+          args:
+            - php index.php
