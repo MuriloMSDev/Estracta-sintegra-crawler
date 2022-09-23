@@ -42,15 +42,44 @@ class Sintegra
             CURLOPT_HTTPAUTH => CURLAUTH_DIGEST
         ]);
 
-        if(file_exists('result.html')) {
-            unlink('result.html');
-        }
+        $data[] = self::prepareData($response);
 
-        $fp = fopen('result.html','x');
-        fwrite($fp, html_entity_decode(utf8_encode($response)));
-        fclose($fp);
+        self::otherIE($response, $data);
+
+        print_r($data);
 
         self::clearCookies();
+        exit();
+    }
+
+    /**
+     * @param $html
+     * @param $data
+     * @return array|mixed
+     */
+    private static function otherIE($html, &$data = [])
+    {
+        $dom = (@\DOMDocument::loadHTML($html));
+        if(!($formInfo = $dom->getElementById("Sintegra1CampoAnterior")) || is_null($dom->getElementById("consultar"))) {
+            return $data;
+        }
+
+        $response = self::retrieveInfo(self::$url."/sintegra/sintegra1/consultar", [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => [
+                '_method' => 'POST',
+                'data[Sintegra1][campoAnterior]' => $formInfo->getAttribute('value'),
+                'consultar' => ''
+            ],
+            CURLOPT_TIMEOUT => 60,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_HTTPAUTH => CURLAUTH_DIGEST
+        ]);
+
+        $data[] = self::prepareData($response);
+
+        return self::otherIE($response, $data);
     }
 
     /**
@@ -130,5 +159,25 @@ class Sintegra
         curl_close($curl);
 
         return $response;
+    }
+
+    /**
+     * @param $html
+     * @return array
+     */
+    private static function prepareData($html)
+    {
+        $data = [];
+        $dom = (@\DOMDocument::loadHTML($html));
+        $finder = new \DOMXPath($dom);
+        $tds = $finder->query("//*[contains(concat(' ', normalize-space(@class), ' '), ' form_label ')]");
+
+        foreach ($tds as $td) {
+            $name = trim(str_replace(":", "", $td->nodeValue));
+            if($name != "SPED (EFD, NF-e, CT-e)")
+            $data[$name] = trim($td->nextSibling->nextSibling->nodeValue);
+        }
+
+        return $data;
     }
 }
