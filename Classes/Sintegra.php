@@ -69,7 +69,8 @@ class Sintegra
      */
     private static function otherIE($html, &$data = [])
     {
-        $dom = @\DOMDocument::loadHTML($html);
+        $dom = new \DOMDocument;
+        @$dom->loadHTML($html);
         if(!($formInfo = $dom->getElementById("Sintegra1CampoAnterior")) || is_null($dom->getElementById("consultar"))) {
             return $data;
         }
@@ -179,7 +180,8 @@ class Sintegra
     private static function prepareData($html)
     {
         $data = [];
-        $dom = (@\DOMDocument::loadHTML($html));
+        $dom = new \DOMDocument;
+        @$dom->loadHTML($html);
         $finder = new \DOMXPath($dom);
         $tds = $finder->query("//*[contains(concat(' ', normalize-space(@class), ' '), ' form_label ')]|//*[contains(concat(' ', normalize-space(@class), ' '), ' erro_label ')]");
 

@@ -75,4 +75,4 @@ tasks:
       - task:
           name: app
           args:
-            - php index.php
+            - "php index.php"
